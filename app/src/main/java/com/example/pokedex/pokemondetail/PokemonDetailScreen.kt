@@ -263,7 +263,7 @@ fun PokemonDetailDataSection(
             modifier = Modifier.weight(1f)
 
         )
-        
+
     }
 }
 
@@ -318,7 +318,7 @@ fun PokemonStat(
             .clip(CircleShape)
             .background(
                 if (isSystemInDarkTheme()) {
-                    Color(0xFF505050)
+                    Color(0xFF7C7C7C)
                 } else {
                     Color.LightGray
                 }
@@ -334,12 +334,21 @@ fun PokemonStat(
                 .background(statColor)
                 .padding(horizontal = 8.dp)
         ) {
-            Text(text = statName, fontWeight = FontWeight.Bold)
-            Text(
-                text = (curPercent.value * statMaxValue).toInt().toString(),
-                fontWeight = FontWeight.Bold
-            )
         }
+        Text(
+            text = statName,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier
+                .align(Alignment.CenterStart)
+                .padding(start = 8.dp)
+        )
+        Text(
+            text = (curPercent.value * statMaxValue).toInt().toString(),
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier
+                .align(Alignment.CenterEnd)
+                .padding(end = 8.dp)
+        )
     }
 }
 
