@@ -55,7 +55,7 @@ class PokemonListViewModel @Inject constructor(
 
                     loadError.value = ""
                     isLoading.value = false
-                    pokemonList.value = pokedexEntries
+                    pokemonList.value += pokedexEntries
                 }
                 is Resource.Error -> {
                     loadError.value = result.message!!
