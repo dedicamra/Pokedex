@@ -7,10 +7,7 @@ import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.CircularProgressIndicator
-import androidx.compose.material.Icon
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
+import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.runtime.*
@@ -37,8 +34,12 @@ import com.example.pokedex.util.Resource
 import com.example.pokedex.util.parseStatToAbbr
 import com.example.pokedex.util.parseStatToColor
 import com.example.pokedex.util.parseTypeToColor
+import com.google.accompanist.pager.*
+import kotlinx.coroutines.launch
 import java.lang.Math.round
 import java.util.*
+
+var dominantColorDS:Color=Color.White
 
 @Composable
 fun PokemonDetailScreen(
@@ -53,6 +54,7 @@ fun PokemonDetailScreen(
         value = viewModel.getPokemonInfo(pokemonName)
     }.value
 
+    dominantColorDS=dominantColor
 
     Box(
         modifier = Modifier
@@ -172,6 +174,7 @@ fun PokemonDetailStateWrapper(
     }
 }
 
+@OptIn(ExperimentalPagerApi::class)
 @Composable
 fun PokemonDetailSection(
     pokemonInfo: Pokemon,
@@ -194,11 +197,10 @@ fun PokemonDetailSection(
         )
 
         PokemonTypeSection(types = pokemonInfo.types)
-        PokemonDetailDataSection(
-            pokemonWeight = pokemonInfo.weight,
-            pokemonHeight = pokemonInfo.height
-        )
-        PokemonBaseStats(pokemonInfo = pokemonInfo)
+
+        val pagerState = rememberPagerState(pageCount = 2)
+        TabsLayout(pagerState = pagerState)
+        TabsContent(pagerState = pagerState, pokemonInfo = pokemonInfo)
     }
 
 }
@@ -233,38 +235,91 @@ fun PokemonTypeSection(
 
 @Composable
 fun PokemonDetailDataSection(
-    pokemonWeight: Int,
-    pokemonHeight: Int,
+    pokemonInfo: Pokemon,
     sectionHeight: Dp = 80.dp
 ) {
     val pokemonWeighIntKg = remember {
-        round(pokemonWeight * 100f) / 1000f
+        round(pokemonInfo.weight * 100f) / 1000f
     }
     val pokemonHeightInMeters = remember {
-        round(pokemonHeight * 100f) / 1000f
+        round(pokemonInfo.height * 100f) / 1000f
     }
 
-    Row(modifier = Modifier.fillMaxWidth()) {
-        PokemonDetailDataItem(
-            dataValue = pokemonWeighIntKg,
-            dataUnit = "kg",
-            dataIcon = painterResource(id = R.drawable.ic_weight),
-            modifier = Modifier.weight(1f)
-        )
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(modifier = Modifier.fillMaxWidth()) {
+            PokemonDetailDataItem(
+                dataValue = pokemonWeighIntKg,
+                dataUnit = "kg",
+                dataIcon = painterResource(id = R.drawable.ic_weight),
+                modifier = Modifier.weight(1f)
+            )
+            Spacer(
+                modifier = Modifier
+                    .size(1.dp, sectionHeight)
+                    .background(Color.LightGray)
+            )
+            PokemonDetailDataItem(
+                dataValue = pokemonHeightInMeters,
+                dataUnit = "m",
+                dataIcon = painterResource(id = R.drawable.ic_height),
+                modifier = Modifier.weight(1f)
+
+            )
+
+        }
+
         Spacer(
             modifier = Modifier
-                .size(1.dp, sectionHeight)
-                .background(Color.LightGray)
-        )
-        PokemonDetailDataItem(
-            dataValue = pokemonHeightInMeters,
-            dataUnit = "m",
-            dataIcon = painterResource(id = R.drawable.ic_height),
-            modifier = Modifier.weight(1f)
-
+                .fillMaxWidth()
+                .height(20.dp)
         )
 
+        Row(modifier = Modifier.fillMaxWidth()) {
+            Text(
+                text = "Abilities:",
+                modifier = Modifier.weight(0.3f),
+                color = MaterialTheme.colors.onSurface,
+                fontWeight = FontWeight.Bold
+            )
+
+            var abilitiesString = ""
+            var counterComa = 0
+            for (ability in pokemonInfo.abilities) {
+                counterComa++
+                abilitiesString += ability.ability.name
+                if (counterComa < pokemonInfo.abilities.size)
+                    abilitiesString += ", "
+            }
+
+            Text(
+                text = abilitiesString,
+                modifier = Modifier.weight(0.7f),
+                color = MaterialTheme.colors.onSurface
+            )
+        }
+
+        Spacer(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(20.dp)
+        )
+        Row(modifier = Modifier.fillMaxWidth()) {
+            Text(
+                text = "Species:",
+                modifier = Modifier.weight(0.3f),
+                color = MaterialTheme.colors.onSurface,
+                fontWeight = FontWeight.Bold
+            )
+
+            Text(
+                text = pokemonInfo.species.name,
+                modifier = Modifier.weight(0.7f),
+                color = MaterialTheme.colors.onSurface
+            )
+        }
     }
+
+
 }
 
 @Composable
@@ -281,7 +336,7 @@ fun PokemonDetailDataItem(
     ) {
         Icon(painter = dataIcon, contentDescription = null, tint = MaterialTheme.colors.onSurface)
         Spacer(modifier = Modifier.height(8.dp))
-        Text(text = "$dataValue$dataUnit", color = MaterialTheme.colors.onSurface)
+        Text(text = "$dataValue $dataUnit", color = MaterialTheme.colors.onSurface)
     }
 }
 
@@ -365,8 +420,7 @@ fun PokemonBaseStats(
         modifier = Modifier
             .fillMaxWidth()
     ) {
-        Spacer(modifier = Modifier.height(40.dp))
-        Text(text = "Base stats: ", fontSize = 20.sp, color = MaterialTheme.colors.onSurface)
+
         Spacer(modifier = Modifier.height(20.dp))
 
         for (i in pokemonInfo.stats.indices) {
@@ -380,6 +434,58 @@ fun PokemonBaseStats(
             )
             Spacer(modifier = Modifier.height(8.dp))
 
+        }
+
+    }
+}
+
+@OptIn(ExperimentalPagerApi::class)
+@Composable
+fun TabsLayout(pagerState: PagerState) {
+    val tabs = listOf("Base details", "About")
+    val scope = rememberCoroutineScope()
+
+    TabRow(
+        selectedTabIndex = pagerState.currentPage,
+        backgroundColor = Color.Transparent,
+        contentColor = MaterialTheme.colors.onBackground,
+        indicator = { tabPositions ->
+            TabRowDefaults.Indicator(
+                Modifier.pagerTabIndicatorOffset(pagerState, tabPositions),
+                height = 2.dp,
+                color = dominantColorDS
+            )
+        }
+    ) {
+        tabs.forEachIndexed { index, _ ->
+            Tab(
+                text = {
+                    Text(
+                        text = tabs[index],
+                        color = if (pagerState.currentPage == index) dominantColorDS else MaterialTheme.colors.onBackground
+                    )
+                },
+                selected = pagerState.currentPage == index,
+                onClick = {
+                    scope.launch {
+                        pagerState.animateScrollToPage(index)
+                    }
+                }
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalPagerApi::class)
+@Composable
+fun TabsContent(
+    pagerState: PagerState,
+    pokemonInfo: Pokemon
+) {
+    HorizontalPager(state = pagerState) { page ->
+        when (page) {
+            0 -> PokemonBaseStats(pokemonInfo = pokemonInfo)
+            1 -> PokemonDetailDataSection(pokemonInfo = pokemonInfo)
         }
 
     }
