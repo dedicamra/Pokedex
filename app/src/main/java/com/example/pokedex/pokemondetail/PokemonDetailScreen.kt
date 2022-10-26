@@ -30,16 +30,15 @@ import coil.compose.AsyncImage
 import com.example.pokedex.R
 import com.example.pokedex.data.remote.responses.Pokemon
 import com.example.pokedex.data.remote.responses.Type
+import com.example.pokedex.pokemondetail.pokemonmoves.PokemonMovesScreen
 import com.example.pokedex.util.Resource
 import com.example.pokedex.util.parseStatToAbbr
 import com.example.pokedex.util.parseStatToColor
 import com.example.pokedex.util.parseTypeToColor
-import com.google.accompanist.pager.*
-import kotlinx.coroutines.launch
 import java.lang.Math.round
 import java.util.*
 
-var dominantColorDS:Color=Color.White
+var dominantColorDS: Color = Color.White
 
 @Composable
 fun PokemonDetailScreen(
@@ -54,7 +53,7 @@ fun PokemonDetailScreen(
         value = viewModel.getPokemonInfo(pokemonName)
     }.value
 
-    dominantColorDS=dominantColor
+    dominantColorDS = dominantColor
 
     Box(
         modifier = Modifier
@@ -174,19 +173,22 @@ fun PokemonDetailStateWrapper(
     }
 }
 
-@OptIn(ExperimentalPagerApi::class)
+//@OptIn(ExperimentalPagerApi::class)
 @Composable
 fun PokemonDetailSection(
     pokemonInfo: Pokemon,
     modifier: Modifier = Modifier
 ) {
     val scrollState = rememberScrollState()
+    var selectedTabIndex by remember {
+        mutableStateOf(0)
+    }
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier
             .fillMaxSize()
             .offset(y = 100.dp)
-            .verticalScroll(scrollState)
+        //.verticalScroll(scrollState)
     ) {
         Text(
             text = "#${pokemonInfo.id} ${pokemonInfo.name.uppercase(Locale.ROOT)}",
@@ -198,9 +200,9 @@ fun PokemonDetailSection(
 
         PokemonTypeSection(types = pokemonInfo.types)
 
-        val pagerState = rememberPagerState(pageCount = 2)
-        TabsLayout(pagerState = pagerState)
-        TabsContent(pagerState = pagerState, pokemonInfo = pokemonInfo)
+        TabsLayout() { selectedTabIndex = it }
+        SwitchTabContent(selected = selectedTabIndex, pokemonInfo = pokemonInfo)
+        Spacer(modifier = Modifier.height(20.dp))
     }
 
 }
@@ -246,6 +248,7 @@ fun PokemonDetailDataSection(
     }
 
     Column(modifier = Modifier.fillMaxWidth()) {
+        Spacer(modifier = Modifier.height(20.dp))
         Row(modifier = Modifier.fillMaxWidth()) {
             PokemonDetailDataItem(
                 dataValue = pokemonWeighIntKg,
@@ -439,54 +442,47 @@ fun PokemonBaseStats(
     }
 }
 
-@OptIn(ExperimentalPagerApi::class)
+
 @Composable
-fun TabsLayout(pagerState: PagerState) {
-    val tabs = listOf("Base details", "About")
+fun TabsLayout(
+    onTabSelected: (selectedIndex: Int) -> Unit
+) {
+    val tabs = listOf("Base details", "About", "Moves")
     val scope = rememberCoroutineScope()
+    var selectedTabIndex by remember {
+        mutableStateOf(0)
+    }
 
     TabRow(
-        selectedTabIndex = pagerState.currentPage,
+        selectedTabIndex = selectedTabIndex,
         backgroundColor = Color.Transparent,
-        contentColor = MaterialTheme.colors.onBackground,
-        indicator = { tabPositions ->
-            TabRowDefaults.Indicator(
-                Modifier.pagerTabIndicatorOffset(pagerState, tabPositions),
-                height = 2.dp,
-                color = dominantColorDS
-            )
-        }
-    ) {
+        contentColor = MaterialTheme.colors.onSurface,
+
+        ) {
         tabs.forEachIndexed { index, _ ->
             Tab(
                 text = {
-                    Text(
-                        text = tabs[index],
-                        color = if (pagerState.currentPage == index) dominantColorDS else MaterialTheme.colors.onBackground
-                    )
+                    Text(text = tabs[index])
                 },
-                selected = pagerState.currentPage == index,
+                selectedContentColor = dominantColorDS,
+                unselectedContentColor = MaterialTheme.colors.onSurface,
+                selected = selectedTabIndex == index,
                 onClick = {
-                    scope.launch {
-                        pagerState.animateScrollToPage(index)
-                    }
+                    selectedTabIndex = index
+                    onTabSelected(index)
                 }
             )
         }
     }
 }
 
-@OptIn(ExperimentalPagerApi::class)
+
 @Composable
-fun TabsContent(
-    pagerState: PagerState,
-    pokemonInfo: Pokemon
-) {
-    HorizontalPager(state = pagerState) { page ->
-        when (page) {
-            0 -> PokemonBaseStats(pokemonInfo = pokemonInfo)
-            1 -> PokemonDetailDataSection(pokemonInfo = pokemonInfo)
-        }
+fun SwitchTabContent(selected: Int, pokemonInfo: Pokemon) {
+    when (selected) {
+        0 -> PokemonBaseStats(pokemonInfo = pokemonInfo)
+        1 -> PokemonDetailDataSection(pokemonInfo = pokemonInfo)
+        2 -> PokemonMovesScreen(pokemonMoves = pokemonInfo.moves)
 
     }
 }
