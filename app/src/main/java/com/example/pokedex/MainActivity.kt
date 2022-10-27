@@ -3,23 +3,15 @@ package com.example.pokedex
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Surface
-import androidx.compose.material.Text
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.toLowerCase
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.example.pokedex.data.remote.responses.Pokemon
 import com.example.pokedex.pokemondetail.PokemonDetailScreen
+import com.example.pokedex.pokemondetail.pokemonmoves.MoveInfoScreen
 import com.example.pokedex.pokemonlist.PokemonListScreen
 import com.example.pokedex.ui.theme.PokedexTheme
 import dagger.hilt.android.AndroidEntryPoint
@@ -61,6 +53,25 @@ class MainActivity : ComponentActivity() {
                             dominantColor = dominantColor,
                             pokemonName = pokemonName?.lowercase(Locale.ROOT) ?: "",
                             navController = navController
+                        )
+                    }
+
+                    composable(
+                        "move_info_screen/{moveUrl}",
+                        arguments = listOf(
+                            navArgument("moveUrl") {
+                                type = NavType.StringType
+                            }
+
+                        )
+                    ) {
+
+                        val moveUrl = remember {
+                            it.arguments?.getString("moveUrl")
+                        }
+                        MoveInfoScreen(
+                            navController = navController,
+                            moveUrl = moveUrl!!
                         )
                     }
                 }

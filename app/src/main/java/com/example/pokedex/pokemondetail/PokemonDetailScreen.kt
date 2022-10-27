@@ -70,6 +70,7 @@ fun PokemonDetailScreen(
         )
 
         PokemonDetailStateWrapper(
+            navController = navController,
             pokemonInfo = pokemonInfo,
             modifier = Modifier
                 .fillMaxSize()
@@ -146,6 +147,7 @@ fun PokemonDetailTopSection(
 
 @Composable
 fun PokemonDetailStateWrapper(
+    navController: NavController,
     pokemonInfo: Resource<Pokemon>,
     modifier: Modifier = Modifier,
     loadingModifier: Modifier = Modifier
@@ -154,7 +156,8 @@ fun PokemonDetailStateWrapper(
         is Resource.Success -> {
             PokemonDetailSection(
                 pokemonInfo = pokemonInfo.data!!,
-                modifier = modifier.offset(y = (-20).dp)
+                modifier = modifier.offset(y = (-20).dp),
+                navController = navController
             )
         }
         is Resource.Error -> {
@@ -177,7 +180,8 @@ fun PokemonDetailStateWrapper(
 @Composable
 fun PokemonDetailSection(
     pokemonInfo: Pokemon,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    navController: NavController,
 ) {
     val scrollState = rememberScrollState()
     var selectedTabIndex by remember {
@@ -201,7 +205,11 @@ fun PokemonDetailSection(
         PokemonTypeSection(types = pokemonInfo.types)
 
         TabsLayout() { selectedTabIndex = it }
-        SwitchTabContent(selected = selectedTabIndex, pokemonInfo = pokemonInfo)
+        SwitchTabContent(
+            selected = selectedTabIndex,
+            pokemonInfo = pokemonInfo,
+            navController = navController
+        )
         Spacer(modifier = Modifier.height(20.dp))
     }
 
@@ -478,11 +486,18 @@ fun TabsLayout(
 
 
 @Composable
-fun SwitchTabContent(selected: Int, pokemonInfo: Pokemon) {
+fun SwitchTabContent(
+    selected: Int,
+    pokemonInfo: Pokemon,
+    navController: NavController
+) {
     when (selected) {
         0 -> PokemonBaseStats(pokemonInfo = pokemonInfo)
         1 -> PokemonDetailDataSection(pokemonInfo = pokemonInfo)
-        2 -> PokemonMovesScreen(pokemonMoves = pokemonInfo.moves)
+        2 -> PokemonMovesScreen(
+            navController = navController,
+            pokemonMoves = pokemonInfo.moves
+        )
 
     }
 }

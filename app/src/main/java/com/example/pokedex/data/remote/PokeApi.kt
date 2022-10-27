@@ -1,10 +1,12 @@
 package com.example.pokedex.data.remote
 
+import com.example.pokedex.data.remote.moveinforesponses.MoveInfo
 import com.example.pokedex.data.remote.responses.Pokemon
 import com.example.pokedex.data.remote.responses.PokemonList
 import retrofit2.http.GET
 import retrofit2.http.Path
 import retrofit2.http.Query
+import retrofit2.http.Url
 
 interface PokeApi {
 
@@ -18,4 +20,9 @@ interface PokeApi {
     suspend fun getPokemonInfo(
         @Path("name") name: String
     ): Pokemon
+
+    @GET
+    suspend fun getMoveInfo(
+        @Url url: String
+    ):MoveInfo
 }

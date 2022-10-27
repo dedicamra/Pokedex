@@ -1,6 +1,7 @@
 package com.example.pokedex.pokemondetail.pokemonmoves
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -15,13 +16,17 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import com.example.pokedex.data.remote.responses.Move
 import com.example.pokedex.pokemondetail.dominantColorDS
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 
 
 @Composable
 fun PokemonMovesScreen(
-    pokemonMoves: List<Move>
+    pokemonMoves: List<Move>,
+    navController: NavController,
 ) {
     Column(modifier = Modifier.padding(top = 20.dp, bottom = 100.dp)) {
         LazyVerticalGrid(
@@ -31,6 +36,7 @@ fun PokemonMovesScreen(
         ) {
             items(pokemonMoves.size) {
                 MoveCard(
+                    navController=navController,
                     pokemonMove = pokemonMoves[it],
                     modifier = Modifier
                         .aspectRatio(1f)
@@ -45,6 +51,7 @@ fun PokemonMovesScreen(
 
 @Composable
 fun MoveCard(
+    navController: NavController,
     pokemonMove: Move,
     modifier: Modifier = Modifier
 ) {
@@ -61,6 +68,12 @@ fun MoveCard(
                     )
                 )
             )
+            .clickable {
+                val url= URLEncoder.encode(pokemonMove.move.url, StandardCharsets.UTF_8.toString())
+                navController.navigate(
+                    "move_info_screen/${url}"
+                )
+            }
     ) {
         Text(
             text = pokemonMove.move.name,
